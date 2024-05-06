@@ -116,9 +116,13 @@
 byte mac[] = {
     0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 IPAddress ip(192, 168, 0, 100); // The IP address will be dependent on your local network:
-ModbusEthernet mb;               // Declare ModbusTCP instance
+ModbusEthernet mb;              // Declare ModbusTCP instance
+
+const int TEST_LED_PIN = 21;
+int testLedPwm = 0;
 
 const int SENSOR_IREG = 100;
+const int SENSOR_HREG = 100;
 long ts;
 
 void setup()
@@ -128,20 +132,30 @@ void setup()
     Ethernet.begin(mac, ip); // start the Ethernet connection
     delay(1000);             // give the Ethernet shield a second to initialize
     mb.server();             // Act as Modbus TCP server
-    // mb.addReg(HREG(100));    // Add Holding register #100
+    mb.addReg(HREG(SENSOR_HREG));    // Add Holding register #100
     mb.addIreg(SENSOR_IREG);
+
+    ledcSetup(0, 5000, 8);
+    ledcAttachPin(TEST_LED_PIN, 0);
 }
 
-void loop() {
-   //Call once inside loop() - all magic here
-   mb.task();
+void loop()
+{
+    // Call once inside loop() - all magic here
+    mb.task();
 
-   //Read each two seconds
-   if (millis() > ts + 2000) {
-       ts = millis();
-       //Setting raw value (0-1024)
-       mb.Ireg(SENSOR_IREG, analogRead(33));
-       Serial.println(mb.Ireg(SENSOR_IREG));
-   }
-   delay(10);
+    // Read each two seconds
+    if (millis() > ts + 2000)
+    {
+        ts = millis();
+        // Setting raw value (0-1024)
+        mb.Ireg(SENSOR_IREG, analogRead(33));
+        Serial.println(mb.Ireg(SENSOR_IREG));
+    }
+
+    testLedPwm = mb.Hreg(100);
+    Serial.println(testLedPwm);
+    ledcWrite(0, testLedPwm % 256);
+    // testLedPwm++;
+    delay(10);
 }
