@@ -51,7 +51,7 @@ namespace ModbusExample
             // read five register values
             ushort[] inputs = master.ReadInputRegisters(slaveId, startAddress, 1);
             //ushort[] inputs = master.ReadHoldingRegisters(slaveId, startAddress, 3);
-            master.WriteSingleRegister(slaveId, startAddress, 1);
+            master.WriteSingleRegister(slaveId, startAddress, 55);
             for (int i = 0; i < 1; i++)
             {
                 Console.WriteLine($"Register {(startAddress + i)}={(inputs[i])}");

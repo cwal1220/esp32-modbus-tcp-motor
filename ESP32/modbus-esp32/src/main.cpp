@@ -111,6 +111,7 @@
 #include <SPI.h>
 #include <Ethernet.h> // Ethernet library v2 is required
 #include <ModbusEthernet.h>
+#include <ModbusAPI.h>
 
 // Enter a MAC address and IP address for your controller below.
 byte mac[] = {
@@ -119,20 +120,27 @@ IPAddress ip(192, 168, 0, 100); // The IP address will be dependent on your loca
 ModbusEthernet mb;              // Declare ModbusTCP instance
 
 const int TEST_LED_PIN = 21;
-int testLedPwm = 0;
 
 const int SENSOR_IREG = 100;
 const int SENSOR_HREG = 100;
 long ts;
 
+uint16_t cbLed(TRegister *reg, uint16_t val)
+{
+    // Attach ledPin to LED_COIL register
+    ledcWrite(0, val);
+    return val;
+}
+
 void setup()
 {
-    Serial.begin(115200);    // Open serial communications and wait for port to open
-    Ethernet.init(5);        // SS pin
-    Ethernet.begin(mac, ip); // start the Ethernet connection
-    delay(1000);             // give the Ethernet shield a second to initialize
-    mb.server();             // Act as Modbus TCP server
-    mb.addReg(HREG(SENSOR_HREG));    // Add Holding register #100
+    Serial.begin(115200);         // Open serial communications and wait for port to open
+    Ethernet.init(5);             // SS pin
+    Ethernet.begin(mac, ip);      // start the Ethernet connection
+    delay(1000);                  // give the Ethernet shield a second to initialize
+    mb.server();                  // Act as Modbus TCP server
+    mb.addReg(HREG(SENSOR_HREG)); // Add Holding register #100
+    mb.onSetHreg(SENSOR_HREG, cbLed);
     mb.addIreg(SENSOR_IREG);
 
     ledcSetup(0, 5000, 8);
@@ -152,10 +160,5 @@ void loop()
         mb.Ireg(SENSOR_IREG, analogRead(33));
         Serial.println(mb.Ireg(SENSOR_IREG));
     }
-
-    testLedPwm = mb.Hreg(100);
-    Serial.println(testLedPwm);
-    ledcWrite(0, testLedPwm % 256);
-    // testLedPwm++;
     delay(10);
 }
